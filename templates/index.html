@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Care Connect - NLP Triage Chatbot</title>
+  <title>Care Connect Chatbot</title>
   <style>
     body{font-family:Arial;background:#f2f6fb;margin:0;padding:20px}
     .chatbox{max-width:920px;margin:auto;background:#fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);overflow:hidden}
@@ -25,7 +25,7 @@
 <body>
 <div class="chatbox">
   <div class="chat-header">
-    <span>Care Connect - NLP Triage Chatbot</span>
+    <span>Care Connect Chatbot</span>
     <div class="header-btns">
       <button class="undo-btn" id="undoBtn">Undo Last</button>
       <button class="reset-btn" id="resetBtn">Reset Chat</button>
@@ -89,7 +89,7 @@ const questions = [
   { key:"chest_pain", q:"Do you have chest pain?", type:"yn" },
   { key:"breathing_difficulty", q:"Do you feel breathing difficulty?", type:"yn" },
   { key:"pain_score", q:"Pain score (0 to 10)?", type:"number_int_0_10" },
-  { key:"chronic_conditions", q:"Select one chronic condition (or 'none'):", type:"option", options:["none","tonsillitis","mild_allergy","thyroid_disorder","migraine","anemia","recurrent_gastritis","asthma","diabetes","hypertension","epilepsy","heart_disease","kidney_disease","immunocompromised"] }
+  { key:"chronic_conditions", q:"Select one chronic condition (or none)", type:"option", options:["none","tonsillitis","mild_allergy","thyroid_disorder","migraine","anemia","recurrent_gastritis","asthma","diabetes","hypertension","epilepsy","heart_disease","kidney_disease","immunocompromised"] }
 ];
 
 function addMessage(t,s="bot"){
@@ -327,7 +327,7 @@ async function submitToBackend(){
     <p><b>Doctor Summary:</b><br>${data.doctor_summary}</p>
   `;
 
-  addMessage("Triage completed ✅", "bot");
+  addMessage("Triage completed ", "bot");
   phase = "done";
   textAnswer.disabled = true;
   sendBtn.disabled = true;
@@ -344,7 +344,7 @@ undoBtn.addEventListener("click", undoLast);
 resetBtn.addEventListener("click", resetAll);
 
 // Start
-addMessage("Hello! Please describe your condition freely in one sentence.");
+addMessage("Hello! Please describe your condition in brief.");
 textAnswer.placeholder = "e.g. fever, vomiting and weakness since three days";
 textAnswer.focus();
 </script>
