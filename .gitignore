@@ -1,10 +1,10 @@
-# don't upload dependencies
+# dependencies
 node_modules/
 
-# don't upload secrets
+# env files
 .env
 
-# build folders
+# builds
 build/
 dist/
 
@@ -13,9 +13,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# editor settings
+# VSCode
 .vscode/

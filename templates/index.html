@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Care Connect Chatbot</title>
+  <style>
+    body{font-family:Arial;background:#f2f6fb;margin:0;padding:20px}
+    .chatbox{max-width:920px;margin:auto;background:#fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);overflow:hidden}
+    .chat-header{display:flex;justify-content:space-between;align-items:center;background:#2563eb;color:#fff;padding:12px 16px;font-weight:700}
+    .header-btns button{margin-left:8px;border:none;border-radius:8px;padding:7px 10px;cursor:pointer}
+    .undo-btn{background:#f59e0b;color:#fff}
+    .reset-btn{background:#ef4444;color:#fff}
+    .chat-body{height:520px;overflow-y:auto;padding:16px;background:#f8fbff}
+    .msg{max-width:82%;margin:8px 0;padding:10px 12px;border-radius:10px;line-height:1.45;white-space:pre-wrap}
+    .bot{background:#e7f0ff}.user{background:#d1fae5;margin-left:auto}
+    .options{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .opt-btn{border:1px solid #2563eb;color:#2563eb;background:#fff;border-radius:18px;padding:6px 12px;cursor:pointer}
+    .chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid #eee;background:#fff}
+    .chat-input input{flex:1;padding:10px;border:1px solid #ccc;border-radius:8px}
+    .chat-input button{padding:10px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer}
+    .result{background:#eef6ff;margin:12px;padding:12px;border-left:4px solid #2563eb;border-radius:8px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+<div class="chatbox">
+  <div class="chat-header">
+    <span>Care Connect Chatbot</span>
+    <div class="header-btns">
+      <button class="undo-btn" id="undoBtn">Undo Last</button>
+      <button class="reset-btn" id="resetBtn">Reset Chat</button>
+    </div>
+  </div>
+
+  <div id="chatBody" class="chat-body"></div>
+
+  <div id="inputArea" class="chat-input">
+    <input id="textAnswer" type="text" placeholder="Type here..." />
+    <button id="sendBtn">Send</button>
+  </div>
+
+  <div id="resultBox" class="result hidden"></div>
+</div>
+
+<script>
+const chatBody = document.getElementById("chatBody");
+const textAnswer = document.getElementById("textAnswer");
+const sendBtn = document.getElementById("sendBtn");
+const resultBox = document.getElementById("resultBox");
+const undoBtn = document.getElementById("undoBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+const defaultState = () => ({
+  main_complaint: null,
+  fever: null,
+  fever_level: null, // low/mid/high
+  symptom_days: null,
+  headache: null,
+  body_joint_pain: null,
+  nausea_vomiting: null,
+  diarrhea: null,
+  stomach_pain: null,
+  cold_cough_throat: null,
+  dizziness_weakness: null,
+  chest_pain: null,
+  breathing_difficulty: null,
+  pain_score: null,
+  chronic_conditions: []
+});
+
+let state = defaultState();
+let phase = "nlp_first_text"; // nlp_first_text -> followup -> done
+let waitingForText = false;
+let currentQuestion = null;
+let answerHistory = [];
+
+const questions = [
+  { key:"main_complaint", q:"What is your main complaint today?", type:"option", options:["fever","cold_cough","stomach_issue","vomiting","headache","injury","other"] },
+  { key:"fever", q:"Do you currently have fever?", type:"yn" },
+  { key:"fever_level", q:"What is your fever level?", type:"option", options:["low","mid","high"], condition:(s)=>s.fever===1 },
+  { key:"symptom_days", q:"Since how many days are symptoms present?", type:"number" },
+  { key:"headache", q:"Do you have severe headache?", type:"yn" },
+  { key:"body_joint_pain", q:"Do you have body/joint pain?", type:"yn" },
+  { key:"nausea_vomiting", q:"Do you have nausea/vomiting?", type:"yn" },
+  { key:"diarrhea", q:"Do you have loose motion/diarrhea?", type:"yn" },
+  { key:"stomach_pain", q:"Do you have stomach pain?", type:"yn" },
+  { key:"cold_cough_throat", q:"Do you have cold/cough/throat irritation?", type:"yn" },
+  { key:"dizziness_weakness", q:"Do you feel dizziness or unusual weakness?", type:"yn" },
+  { key:"chest_pain", q:"Do you have chest pain?", type:"yn" },
+  { key:"breathing_difficulty", q:"Do you feel breathing difficulty?", type:"yn" },
+  { key:"pain_score", q:"Pain score (0 to 10)?", type:"number_int_0_10" },
+  { key:"chronic_conditions", q:"Select one chronic condition (or none)", type:"option", options:["none","tonsillitis","mild_allergy","thyroid_disorder","migraine","anemia","recurrent_gastritis","asthma","diabetes","hypertension","epilepsy","heart_disease","kidney_disease","immunocompromised"] }
+];
+
+function addMessage(t,s="bot"){
+  const d=document.createElement("div");
+  d.className=`msg ${s}`;
+  d.innerText=t;
+  chatBody.appendChild(d);
+  chatBody.scrollTop=chatBody.scrollHeight;
+}
+
+function addOptions(opts,cb){
+  const wrap=document.createElement("div");
+  wrap.className="options";
+  opts.forEach(o=>{
+    const b=document.createElement("button");
+    b.className="opt-btn";
+    b.innerText=o;
+    b.onclick=()=>{wrap.remove();cb(o)};
+    wrap.appendChild(b);
+  });
+  chatBody.appendChild(wrap);
+  chatBody.scrollTop=chatBody.scrollHeight;
+}
+
+function isAnswered(key,val){
+  if(key==="chronic_conditions") return Array.isArray(val) && val.length>0;
+  return !(val===null || val===undefined || val==="");
+}
+
+function isRelevant(q){
+  if(!q.condition) return true;
+  return q.condition(state);
+}
+
+function nextMissingQuestion(){
+  for(const q of questions){
+    if(!isRelevant(q)) continue;
+    if(!isAnswered(q.key, state[q.key])) return q;
+  }
+  return null;
+}
+
+function inferMainComplaintFromState(s){
+  if(s.nausea_vomiting===1 || s.diarrhea===1 || s.stomach_pain===1) return "stomach_issue";
+  if(s.cold_cough_throat===1) return "cold_cough";
+  if(s.headache===1) return "headache";
+  if(s.fever===1) return "fever";
+  return "other";
+}
+
+async function handleNLPText(userText){
+  addMessage(userText, "user");
+
+  const res = await fetch("/nlp_extract", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text:userText})
+  });
+  const nlp = await res.json();
+
+  const keys = [
+    "fever","headache","body_joint_pain","nausea_vomiting","diarrhea",
+    "stomach_pain","cold_cough_throat","dizziness_weakness","chest_pain",
+    "breathing_difficulty","symptom_days"
+  ];
+
+  keys.forEach(k=>{
+    if(nlp[k] !== null && nlp[k] !== undefined){
+      state[k] = nlp[k];
+    }
+  });
+
+  state.main_complaint = inferMainComplaintFromState(state);
+
+  phase = "followup";
+  askNext();
+}
+
+function askNext(){
+  currentQuestion = nextMissingQuestion();
+
+  if(!currentQuestion){
+    submitToBackend();
+    return;
+  }
+
+  addMessage(currentQuestion.q, "bot");
+
+  if(currentQuestion.type==="yn"){
+    addOptions(["Yes","No"], ans=>{
+      addMessage(ans, "user");
+      const prev = state[currentQuestion.key];
+      const newVal = ans==="Yes" ? 1 : 0;
+      state[currentQuestion.key] = newVal;
+      answerHistory.push({key:currentQuestion.key, prevValue:prev});
+
+      if(currentQuestion.key==="fever" && newVal===0){
+        state.fever_level = null;
+      }
+      askNext();
+    });
+    return;
+  }
+
+  if(currentQuestion.type==="option"){
+    addOptions(currentQuestion.options, ans=>{
+      addMessage(ans, "user");
+      const prev = state[currentQuestion.key];
+      const newVal = currentQuestion.key==="chronic_conditions" ? [ans] : ans;
+      state[currentQuestion.key] = newVal;
+      answerHistory.push({key:currentQuestion.key, prevValue:prev});
+      askNext();
+    });
+    return;
+  }
+
+  if(currentQuestion.type==="number" || currentQuestion.type==="number_int_0_10"){
+    waitingForText = true;
+    textAnswer.value = "";
+    textAnswer.placeholder = currentQuestion.type==="number_int_0_10" ? "Enter integer 0 to 10" : "Enter number";
+    textAnswer.focus();
+  }
+}
+
+function submitText(){
+  const val = textAnswer.value.trim();
+  if(!val) return;
+
+  if(phase==="nlp_first_text"){
+    textAnswer.value = "";
+    handleNLPText(val);
+    return;
+  }
+
+  if(waitingForText && currentQuestion){
+    if(currentQuestion.type==="number"){
+      if(isNaN(Number(val))){
+        alert("Please enter a valid number.");
+        return;
+      }
+      const prev = state[currentQuestion.key];
+      state[currentQuestion.key] = Number(val);
+      answerHistory.push({key:currentQuestion.key, prevValue:prev});
+      addMessage(val,"user");
+      waitingForText = false;
+      textAnswer.value = "";
+      askNext();
+      return;
+    }
+
+    if(currentQuestion.type==="number_int_0_10"){
+      if(!/^\d+$/.test(val)){
+        alert("Please enter an integer from 0 to 10.");
+        return;
+      }
+      const intVal = parseInt(val, 10);
+      if(intVal < 0 || intVal > 10){
+        alert("Pain score must be between 0 and 10.");
+        return;
+      }
+      const prev = state[currentQuestion.key];
+      state[currentQuestion.key] = intVal;
+      answerHistory.push({key:currentQuestion.key, prevValue:prev});
+      addMessage(val,"user");
+      waitingForText = false;
+      textAnswer.value = "";
+      askNext();
+      return;
+    }
+  }
+}
+
+function undoLast(){
+  if(answerHistory.length===0){
+    addMessage("No answer to undo.", "bot");
+    return;
+  }
+  const last = answerHistory.pop();
+  state[last.key] = last.prevValue;
+  addMessage(`Undone "${last.key}". Please answer again.`, "bot");
+  askNext();
+}
+
+function resetAll(){
+  state = defaultState();
+  phase = "nlp_first_text";
+  waitingForText = false;
+  currentQuestion = null;
+  answerHistory = [];
+  chatBody.innerHTML = "";
+  resultBox.classList.add("hidden");
+  resultBox.innerHTML = "";
+  textAnswer.disabled = false;
+  sendBtn.disabled = false;
+
+  addMessage("Hello! Please describe your condition freely in one sentence.");
+  textAnswer.placeholder = "e.g. fever, vomiting and weakness since three days";
+  textAnswer.focus();
+}
+
+async function submitToBackend(){
+  // Final required fields guard
+  const required = ["main_complaint","fever","symptom_days","pain_score","chronic_conditions"];
+  for(const k of required){
+    if(!isAnswered(k, state[k])){
+      currentQuestion = questions.find(q=>q.key===k);
+      askNext();
+      return;
+    }
+  }
+
+  if(state.fever===1 && !isAnswered("fever_level", state.fever_level)){
+    currentQuestion = questions.find(q=>q.key==="fever_level");
+    askNext();
+    return;
+  }
+
+  const res = await fetch("/triage_predict",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(state)
+  });
+
+  const data = await res.json();
+
+  resultBox.classList.remove("hidden");
+  resultBox.innerHTML = `
+    <h3>Triage Result</h3>
+    <p><b>Predicted Priority:</b> ${data.predicted_priority}</p>
+    <p><b>Final Priority:</b> ${data.final_priority}</p>
+    <p><b>Urgency Score:</b> ${data.priority_score}/100</p>
+    <p><b>Reason Summary:</b> ${data.reason_summary}</p>
+    <p><b>Override:</b> ${data.override_flag ? "Yes" : "No"} ${data.override_reason ? "(" + data.override_reason + ")" : ""}</p>
+    <hr>
+    <p><b>Doctor Summary:</b><br>${data.doctor_summary}</p>
+  `;
+
+  addMessage("Triage completed ", "bot");
+  phase = "done";
+  textAnswer.disabled = true;
+  sendBtn.disabled = true;
+}
+
+sendBtn.addEventListener("click", submitText);
+textAnswer.addEventListener("keypress", e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    submitText();
+  }
+});
+undoBtn.addEventListener("click", undoLast);
+resetBtn.addEventListener("click", resetAll);
+
+// Start
+addMessage("Hello! Please describe your condition in brief.");
+textAnswer.placeholder = "e.g. fever, vomiting and weakness since three days";
+textAnswer.focus();
+</script>
+</body>
+</html>
