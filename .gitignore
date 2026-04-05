@@ -1,0 +1,21 @@
+# don't upload dependencies
+node_modules/
+
+# don't upload secrets
+.env
+
+# build folders
+build/
+dist/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor settings
+.vscode/
