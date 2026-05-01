@@ -41,6 +41,15 @@ export default function Home() {
           </div>
           <Link className="chip" to="/login">Login →</Link>
         </div>
+
+        {/* add this card */}
+        <div className="card">
+          <div className="cardTitle">
+            <h2>Chatbot</h2>
+            <span className="small">Describe your symptoms</span>
+          </div>
+          <Link className="chip" to="/chatbot">Open Chatbot →</Link>
+        </div>
       </section>
     </>
   );

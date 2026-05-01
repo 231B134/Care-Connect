@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api/axios";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState({ type: "", text: "" });
+  const navigate = useNavigate();
 
   async function submit(e) {
     e.preventDefault();
@@ -14,7 +16,8 @@ export default function Login() {
       const res = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
-      setStatus({ type: "ok", text: "Login success. Token saved in localStorage." });
+      setStatus({ type: "ok", text: "Login success. Redirecting..." });
+      navigate("/chatbot");
     } catch (err) {
       setStatus({ type: "err", text: err?.response?.data?.message || "Login failed" });
     }

@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import RegisterStudent from "./pages/RegisterStudent";
 import RegisterDoctor from "./pages/RegisterDoctor";
+import Chatbot from "./pages/Chatbot"; // <-- add this
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
 
           <nav className="navLinks">
             <Link className="chip" to="/">Home</Link>
+            <Link className="chip" to="/chatbot">Chatbot</Link> {/* add */}
           </nav>
         </div>
       </header>
@@ -26,6 +28,7 @@ export default function App() {
           <Route path="/register-student" element={<RegisterStudent />} />
           <Route path="/register-doctor" element={<RegisterDoctor />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/chatbot" element={<Chatbot />} /> {/* add */}
         </Routes>
 
         <div className="footer">
