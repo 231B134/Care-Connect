@@ -174,6 +174,15 @@ def generate_doctor_summary(data, predicted_priority, final_priority, score, chr
     return summary
 
 
+def to_int(value, default=0):
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -192,18 +201,20 @@ def triage_predict():
     data = request.get_json()
 
     # Safe defaults
-    data["fever"] = int(data.get("fever", 0))
-    data["symptom_days"] = int(data.get("symptom_days", 1))
-    data["pain_score"] = int(data.get("pain_score", 0))
-    data["headache"] = int(data.get("headache", 0))
-    data["body_joint_pain"] = int(data.get("body_joint_pain", 0))
-    data["nausea_vomiting"] = int(data.get("nausea_vomiting", 0))
-    data["diarrhea"] = int(data.get("diarrhea", 0))
-    data["stomach_pain"] = int(data.get("stomach_pain", 0))
-    data["cold_cough_throat"] = int(data.get("cold_cough_throat", 0))
-    data["dizziness_weakness"] = int(data.get("dizziness_weakness", 0))
-    data["chest_pain"] = int(data.get("chest_pain", 0))
-    data["breathing_difficulty"] = int(data.get("breathing_difficulty", 0))
+    data["fever"] = to_int(data.get("fever", 0))
+    data["symptom_days"] = to_int(data.get("symptom_days", 1))
+    data["pain_score"] = to_int(data.get("pain_score", 0))
+    data["headache"] = to_int(data.get("headache", 0))
+    data["body_joint_pain"] = to_int(data.get("body_joint_pain", 0))
+    data["nausea_vomiting"] = to_int(data.get("nausea_vomiting", 0))
+    data["diarrhea"] = to_int(data.get("diarrhea", 0))
+    data["stomach_pain"] = to_int(data.get("stomach_pain", 0))
+    data["cold_cough_throat"] = to_int(data.get("cold_cough_throat", 0))
+    data["dizziness_weakness"] = to_int(data.get("dizziness_weakness", 0))
+    data["chest_pain"] = to_int(data.get("chest_pain", 0))
+    data["breathing_difficulty"] = to_int(data.get("breathing_difficulty", 0))
+
+    data["main_complaint"] = data.get("main_complaint") or "general symptoms"
 
     # Fever level to temperature
     fever_level = data.get("fever_level", "")
