@@ -1,0 +1,51 @@
+.bookingCard {
+  display: grid;
+  gap: 12px;
+}
+
+.calendar-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.calendar-day {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.slot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.slot {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.slot--selected {
+  border-color: rgba(110,168,254,.6);
+  box-shadow: 0 0 0 3px rgba(110,168,254,.18);
+}
+
+.slot--booked {
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.bookingActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}

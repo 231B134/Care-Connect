@@ -1,0 +1,32 @@
+.scheduleList {
+  display: grid;
+  gap: 10px;
+}
+
+.scheduleItem {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+}
+
+.scheduleItem--high {
+  background: rgba(255, 91, 110, 0.18);
+  border-color: rgba(255, 91, 110, 0.35);
+}
+
+.scheduleItem--medium {
+  background: rgba(255, 196, 0, 0.18);
+  border-color: rgba(255, 196, 0, 0.35);
+}
+
+.scheduleItem--low {
+  background: rgba(53, 211, 153, 0.18);
+  border-color: rgba(53, 211, 153, 0.35);
+}
+
+.scheduleMeta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}

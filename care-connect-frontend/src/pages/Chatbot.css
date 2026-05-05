@@ -1,0 +1,89 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap");
+
+.container {
+  font-family: "Poppins", sans-serif;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.calendar {
+  border: 1px solid #e0e7ff;
+  background: #f8faff;
+}
+
+.calendar-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.calendar-day {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.slot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.slot {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #cfd7ff;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slot:hover {
+  background: #eef3ff;
+}
+
+.slot--selected {
+  background: #dbe8ff;
+  border-color: #5b8cff;
+}
+
+.slot--booked {
+  background: #f1f1f1;
+  border-color: #ddd;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #eef3ff;
+  color: #2f5cff;
+  margin-left: 6px;
+}
+.chatBox {
+  min-height: 240px;
+}
+
+.chatRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chatOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
